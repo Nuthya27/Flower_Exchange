@@ -276,13 +276,35 @@ int main()
     file.close();
 
     if (rose_buy_orders.size() == 0) {
-        cout << "No buy orders" << endl;
+        cout << "No rose buy orders" << endl;
     }
     else {
-        cout << "Buy orders:" << endl;
+        cout << "Buy rose orders:" << endl;
         for (int i = 0; i < rose_buy_orders.size(); i++)
         {
             cout << rose_buy_orders[i].client_order_id << '\n';
+        }
+    }
+
+    if (lavender_buy_orders.size() == 0) {
+        cout << "No lavender buy orders" << endl;
+    }
+    else {
+        cout << "Buy lavender orders:" << endl;
+        for (int i = 0; i < lavender_buy_orders.size(); i++)
+        {
+            cout << lavender_buy_orders[i].client_order_id << '\n';
+        }
+    }
+
+    if (lotus_buy_orders.size() == 0) {
+        cout << "No lotus buy orders" << endl;
+    }
+    else {
+        cout << "Buy lotus orders:" << endl;
+        for (int i = 0; i < lotus_buy_orders.size(); i++)
+        {
+            cout << lotus_buy_orders[i].client_order_id << '\n';
         }
     }
 
