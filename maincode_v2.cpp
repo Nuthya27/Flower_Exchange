@@ -3,6 +3,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 using namespace std;
 
 struct Order {
@@ -153,9 +154,25 @@ void order_book_handling(vector<Order>& buy_orders, vector<Order>& sell_orders, 
         ID++;
 }
 
-string reject(Order& orderLine, string reason){
+string reason(Order& orderLine){
 
+    if (orderLine.instrument != "Rose" && orderLine.instrument != "Lavender" && orderLine.instrument != "Lotus" && orderLine.instrument != "Tulip" && orderLine.instrument != "Orchid"   ){
+        return "Invalid instrument";
+    }
+
+    if (orderLine.side != 1 && orderLine.side != 2){
+        return "Invalid side";
+    }
+
+    if (orderLine.quantity < 10 || orderLine.quantity > 1000  || orderLine.quantity % 10 != 0){
+        return "Invalid quantity";
+    }
+
+    if (orderLine.price <= 0){
+        return "Invalid price";
+    }
     
+    return "Valid";
 }
 
 
@@ -187,10 +204,11 @@ int main()
     cout << "Reading file " << file_name << endl;
 
     getline(file, line);
-    
+    string reject_reason;
     int ID=1;
     int j=1;
     while (getline(file, line)) {
+
         //cout<<i--<<endl;
         //cout<< line<<"\n";
         Order order;
@@ -207,6 +225,14 @@ int main()
         getline(ss, token, ',');
         order.price = stod(token);
         order.order_id = ID;
+
+        reject_reason = reason(order);
+        
+        if (reject_reason != "Valid"){
+            cout << "Reject " << order.client_order_id << " " << reject_reason << endl;
+            continue;
+        }
+        
         if (order.side == 1) {
             if (order.instrument == "Rose"){
                 rose_buy_orders.push_back(order);
