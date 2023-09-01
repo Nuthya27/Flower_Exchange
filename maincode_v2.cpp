@@ -27,6 +27,7 @@ struct ExecutionReport {
 };
 
 
+
 void insSortAsc(vector<Order>& arr)
 {
     int n = arr.size();
@@ -64,6 +65,20 @@ void insSortDesc(vector<Order>& arr)
     }
 }
 
+void output_csv(vector<ExecutionReport>& excreport, string file_name){
+    ofstream file(file_name);
+    if (!file.is_open()) {
+        cerr << "Error opening file " << file_name << endl;
+    }
+    file << "order_id,client_order_id,instrument,side,execution_status,quantity,price,reason" << endl;
+    for (const auto& report : excreport) {
+        file << report.order_id << "," << report.client_order_id << "," << report.instrument << "," << report.side << "," << report.execution_status << "," << report.quantity << "," << report.price << "," << report.reason << endl;
+    }
+
+    file.close();
+}
+
+
 void order_book_handling(vector<Order>& buy_orders, vector<Order>& sell_orders, vector<ExecutionReport>& excreport, Order& order, int& ID){
     if (buy_orders.empty() || sell_orders.empty() || (buy_orders.front().price<sell_orders.front().price)){
             //no matching needed
@@ -75,7 +90,7 @@ void order_book_handling(vector<Order>& buy_orders, vector<Order>& sell_orders, 
             newReport.execution_status = "New";
             newReport.quantity = order.quantity;
             newReport.price =order.price;
-            newReport.reason = "djsahemk";
+            newReport.reason = "";
             excreport.push_back(newReport);
         }
 
@@ -93,7 +108,7 @@ void order_book_handling(vector<Order>& buy_orders, vector<Order>& sell_orders, 
                 BuyReport.instrument =buy_orders.front().instrument;
                 BuyReport.side =buy_orders.front().side;
                 BuyReport.price =buy_orders.front().price;
-                BuyReport.reason = "djsahemk";  
+                BuyReport.reason = "";  
 
                 ExecutionReport SellReport;
                 SellReport.order_id = sell_orders.front().order_id;
@@ -101,7 +116,7 @@ void order_book_handling(vector<Order>& buy_orders, vector<Order>& sell_orders, 
                 SellReport.instrument =sell_orders.front().instrument;
                 SellReport.side =sell_orders.front().side;
                 SellReport.price =sell_orders.front().price;
-                SellReport.reason = "djsahemk"; 
+                SellReport.reason = ""; 
                 
 
                 if (buy_orders.front().quantity>sell_orders.front().quantity){
@@ -150,9 +165,9 @@ void order_book_handling(vector<Order>& buy_orders, vector<Order>& sell_orders, 
                 break;
             }
         }
-
-        ID++;
 }
+
+
 
 string reason(Order& orderLine){
 
@@ -174,6 +189,23 @@ string reason(Order& orderLine){
     
     return "Valid";
 }
+
+void rejection(vector<ExecutionReport>& excreport,Order& order, string reason, int& ID){
+    ExecutionReport newReport;
+    newReport.order_id = ID;
+    newReport.client_order_id = order.client_order_id ;
+    newReport.instrument =order.instrument;
+    newReport.side =order.side;
+    newReport.execution_status = "Rejected";
+    newReport.quantity = order.quantity;
+    newReport.price =order.price;
+    newReport.reason = reason;
+    excreport.push_back(newReport);
+    ID++;
+
+    output_csv(excreport, "execution_report_v2.csv");
+}
+
 
 
 int main()
@@ -200,6 +232,7 @@ int main()
     vector<Order> orchid_buy_orders;
 
     vector<ExecutionReport> excreport;
+    
 
     cout << "Reading file " << file_name << endl;
 
@@ -215,21 +248,52 @@ int main()
         stringstream ss(line);
         string token;
         getline(ss, token, ',');
-        order.client_order_id = token;
+        if (token == ""){
+            reject_reason = "Missing client order id";
+            continue;   
+        }
+        else{
+            order.client_order_id = token;
+        }
         getline(ss, token, ',');
-        order.instrument = token;
+        if (token == ""){
+            reject_reason = "Missing instrument";
+            continue;
+        }
+        else{
+            order.instrument = token;
+        }
         getline(ss, token, ',');
-        order.side = stoi(token);
+        if (token == ""){
+            reject_reason = "Missing side";
+            continue;
+        }
+        else{
+            order.side = stoi(token);
+        }
         getline(ss, token, ',');
-        order.quantity = stoi(token);
+        if (token == ""){
+            reject_reason = "Missing quantity";
+            continue;
+        }
+        else{
+            order.quantity = stoi(token);
+        }
         getline(ss, token, ',');
-        order.price = stod(token);
+        if (token == ""){
+            reject_reason = "Missing price";
+            continue;
+        }
+        else{
+            order.price = stod(token);
+        }
         order.order_id = ID;
 
         reject_reason = reason(order);
         
         if (reject_reason != "Valid"){
             cout << "Reject " << order.client_order_id << " " << reject_reason << endl;
+            rejection(excreport, order, reject_reason, ID);
             continue;
         }
         
@@ -296,10 +360,22 @@ int main()
         else if(order.instrument == "Orchid"){
             order_book_handling(orchid_buy_orders, orchid_sell_orders, excreport, order, ID);
         }
+
+        ID++;
         
     }
 
     file.close();
+
+    output_csv(excreport, "execution_report_v2.csv");
+
+
+
+
+
+
+
+
 
     if (rose_buy_orders.size() == 0) {
         cout << "No rose buy orders" << endl;
